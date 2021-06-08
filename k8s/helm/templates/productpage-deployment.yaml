@@ -2,11 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}
-  namespace: {{ .Values.ratings.namespace }}
+  namespace: {{ .Values.productpage.namespace }}
   labels:
     app: {{ .Release.Name }}
 spec:
-  replicas: {{ .Values.ratings.replicas }}
+  replicas: {{ .Values.productpage.replicas }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}
@@ -17,21 +17,21 @@ spec:
     spec:
       containers:
       - name: {{ .Release.Name }}
-        image: {{ .Values.ratings.image }}:{{ .Values.ratings.tag }}
+        image: {{ .Values.productpage.image }}:{{ .Values.productpage.tag }}
         imagePullPolicy: Always
         ports:
-        - containerPort: {{ .Values.ratings.port }}
+        - containerPort: {{ .Values.productpage.port }}
           name: web-port
           protocol: TCP
         livenessProbe:
           httpGet:
-            path: {{ .Values.ratings.healthCheckPath }}
-            port: {{ .Values.ratings.port }}
+            path: {{ .Values.productpage.healthCheckPath }}
+            port: {{ .Values.productpage.port }}
             scheme: HTTP
         readinessProbe:
           httpGet:
-            path: {{ .Values.ratings.healthCheckPath }}
-            port: {{ .Values.ratings.port }}
+            path: {{ .Values.productpage.healthCheckPath }}
+            port: {{ .Values.productpage.port }}
             scheme: HTTP
         {{- if .Values.extraEnv }}
         env:
@@ -41,5 +41,5 @@ spec:
         {{- end }}
         {{- end }}
       imagePullSecrets:
-      - name: {{ .Values.ratings.imagePullSecrets }}
+      - name: {{ .Values.productpage.imagePullSecrets }}
 

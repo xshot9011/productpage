@@ -2,11 +2,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}
-  namespace: {{ .Values.ratings.namespace }}
+  namespace: {{ .Values.productpage.namespace }}
 spec :
   type: {{ .Values.ingress.serviceType }}
   ports:
-  - port: {{ .Values.ratings.port }}
-    targetPort: {{ .Values.ratings.port }}
+  - port: {{ .Values.productpage.port }}
+    targetPort: {{ .Values.productpage.port }}
   selector:
     app: {{ .Release.Name }}

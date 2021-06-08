@@ -49,8 +49,9 @@ spec:
 						withKubeConfig([credentialsId: 'gke-opsta-cluster-sa-secret-file']) {
 							sh "helm upgrade -f k8s/helm-values/values-bookinfo-prd-productpage.yaml --wait \
                                  --set extraEnv.COMMIT_ID=${scmVars.GIT_COMMIT} \
-                                 --set ratings.tag=${params.TAG} \
-                                 --namespace opsta-prd bookinfo-prd-productpage k8s/helm/"
+                                 --set productpage.tag=${params.TAG} \
+                                 --namespace opsta-prd bookinfo-prd-productpage k8s/helm/ \
+                                 --install"
 						}
                     }
                 }
