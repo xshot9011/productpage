@@ -1,0 +1,60 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: helm
+    image: lachlanevenson/k8s-helm:v3.5.0
+    command:
+    - cat
+    tty: true
+"""
+        }
+    }
+    
+	parameters {
+        gitParameter name: 'TAG',
+                     selectedValue: 'TOP',
+                     sortMode: 'DESCENDING_SMART',
+                     tagFilter: 'build-*',
+                     type: 'PT_TAG'
+    }
+	
+    stages {
+        
+        stage('Clone ratings source code') {
+            steps {
+                script {
+					scmVars = checkout([
+                        $class: 'GitSCM',
+                        branches: [[
+                            name: "refs/tags/${params.TAG}"
+                        ]],
+                        userRemoteConfigs: [[
+                            credentialsId: 'bookinfo-git-deploy-key',
+                            url: 'git@gitlab.com:workshop35/bookinfo/productpage.git'
+                        ]]
+                    ])
+				}
+            }
+        }
+		
+        stage('Deploy with Helm') {
+            steps {
+                container('helm') {
+                    script {
+						withKubeConfig([credentialsId: 'gke-opsta-cluster-sa-secret-file']) {
+							sh "helm upgrade -f k8s/helm-values/values-bookinfo-prd-productpage.yaml --wait \
+                                 --set extraEnv.COMMIT_ID=${scmVars.GIT_COMMIT} \
+                                 --set ratings.tag=${params.TAG} \
+                                 --namespace opsta-prd bookinfo-prd-productpage k8s/helm/"
+						}
+                    }
+                }
+            }
+        }
+    }
+}

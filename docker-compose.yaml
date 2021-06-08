@@ -1,0 +1,11 @@
+version: "2"
+services:
+  ratings:
+    build: .
+    image: bigdev2000/productpage
+    ports: 
+      - "9080:9080"
+    environment: 
+        RATINGS_HOSTNAME: ratings
+        DETAILS_HOSTNAME: details
+        REVIEWS_HOSTNAME: reviews

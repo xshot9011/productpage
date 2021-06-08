@@ -1,0 +1,75 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: docker
+    image: docker:20.10.3-dind
+    command:
+    - dockerd
+    - --host=unix:///var/run/docker.sock
+    - --host=tcp://0.0.0.0:2375
+    - --storage-driver=overlay2
+    tty: true
+    securityContext:
+        privileged: true
+  - name: git
+    image: alpine/git:v2.30.0
+    command:
+    - cat
+    tty: true
+"""
+        }
+    }
+    
+    stages {
+        
+        stage('Clone ratings source code') {
+            steps {
+                container('jnlp') {
+                    script {
+                        git branch: 'master',
+                            credentialsId: 'bookinfo-git-deploy-key',
+                            url: 'git@gitlab.com:workshop35/bookinfo/productpage.git'
+                    }
+                }
+            }
+        }
+        
+        stage('Tag Docker Image') {
+            steps {
+                container('docker') {
+                    script {
+                        docker.withRegistry('', 'registry-bookinfo') {
+                            uatImage = docker.image('bigdev2000/productpage:uat')
+                            uatImage.pull()  // shouldn't rebuild image
+                            uatImage.push('build-${BUILD_NUMBER}')
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Git tag') {
+            steps {
+                container('git') {
+                    script {
+                        sshagent(credentials: ['bookinfo-git-deploy-key']){
+                            sh """
+                                # Git tag first
+                                git tag build-${BUILD_NUMBER}
+                                # Push tag back to gitlab
+                                SSH_AUTH_SOCK=${SSH_AUTH_SOCK} \
+                                 GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+                                 git push --tags
+                            """
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
